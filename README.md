@@ -5,8 +5,8 @@ Análises para monitoramento semanal de sensores
 loader -ok
 utils -ok
 baseline - ok
-signals 
-correlation
+signals - ok
+correlation - 
 scorer
 classifier
 defaults
