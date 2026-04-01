@@ -21,20 +21,21 @@ from typing import Optional
 # Constants
 # ---------------------------------------------------------------------------
 
-REQUIRED_COLS = {"data", "total"}          # minimum required columns
-DATE_COL      = "data"
-TOTAL_COL     = "total"
-EVENT_COL     = "evento"
+REQUIRED_COLS = {"data", "total"}  # minimum required columns
+DATE_COL = "data"
+TOTAL_COL = "total"
+EVENT_COL = "evento"
 
 
 # ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class LoadResult:
-    df: Optional[pd.DataFrame]             # cleaned dataframe (None on failure)
-    camera_cols: list[str]                 # inferred camera column names
+    df: Optional[pd.DataFrame]  # cleaned dataframe (None on failure)
+    camera_cols: list[str]  # inferred camera column names
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -46,6 +47,7 @@ class LoadResult:
 # ---------------------------------------------------------------------------
 # Public entry point
 # ---------------------------------------------------------------------------
+
 
 def load_csv(file) -> LoadResult:
     """
@@ -62,7 +64,7 @@ def load_csv(file) -> LoadResult:
         Dataclass with the cleaned DataFrame, inferred camera columns,
         validation errors, and warnings.
     """
-    errors: list[str]   = []
+    errors: list[str] = []
     warnings: list[str] = []
 
     # ------------------------------------------------------------------
@@ -71,19 +73,23 @@ def load_csv(file) -> LoadResult:
     try:
         raw = pd.read_csv(
             file,
-            sep=None,           # auto-detect separator
+            sep=None,  # auto-detect separator
             engine="python",
             dtype=str,
             encoding_errors="replace",
         )
     except Exception as exc:
-        return LoadResult(df=None, camera_cols=[], errors=[f"Could not read file: {exc}"])
+        return LoadResult(
+            df=None, camera_cols=[], errors=[f"Could not read file: {exc}"]
+        )
 
     # Normalise column names: strip whitespace, lowercase, remove BOM
-    raw.columns = [c.strip().lower().lstrip("\ufeff").lstrip("\xef\xbb\xbf") for c in raw.columns]
+    raw.columns = [
+        c.strip().lower().lstrip("\ufeff").lstrip("\xef\xbb\xbf") for c in raw.columns
+    ]
 
     # ------------------------------------------------------------------
-    # 2. Check required columns
+    # 2. Check required columns # MSX
     # ------------------------------------------------------------------
     missing = REQUIRED_COLS - set(raw.columns)
     if missing:
@@ -95,9 +101,9 @@ def load_csv(file) -> LoadResult:
     # ------------------------------------------------------------------
     # Try multiple formats to handle diverse inputs
     date_formats = [
-        None,                  # pandas auto-detect (ISO, DD/MM/YYYY, etc.)
-        "%a %b %d, %Y",        # Mon Jan 01, 2024
-        "%a %b %d %Y",         # Mon Jan 01 2024
+        None,  # pandas auto-detect (ISO, DD/MM/YYYY, etc.)
+        "%a %b %d, %Y",  # Mon Jan 01, 2024
+        "%a %b %d %Y",  # Mon Jan 01 2024
         "%d/%m/%Y",
         "%m/%d/%Y",
         "%Y/%m/%d",
@@ -160,14 +166,16 @@ def load_csv(file) -> LoadResult:
 
         # Detect dot-as-thousands: pattern like "1.234" with no decimal after 3 digits
         # Strategy: if comma is never present but dot always precedes exactly 3 digits → thousands
-        has_comma  = cleaned.str.contains(",").any()
+        has_comma = cleaned.str.contains(",").any()
         dot_milhar = cleaned.str.match(r"^\d{1,3}(\.\d{3})+$").any()
 
         if not has_comma and dot_milhar:
             cleaned = cleaned.str.replace(".", "", regex=False)
         else:
             # Standard: comma as thousands, dot as decimal
-            cleaned = cleaned.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
+            cleaned = cleaned.str.replace(".", "", regex=False).str.replace(
+                ",", ".", regex=False
+            )
 
         converted = pd.to_numeric(cleaned, errors="coerce")
         n_bad = int(converted.isna().sum()) - int(raw[col].isna().sum())
@@ -201,23 +209,19 @@ def load_csv(file) -> LoadResult:
     # ------------------------------------------------------------------
     # 8. Add helper columns used downstream
     # ------------------------------------------------------------------
-    iso                 = raw[DATE_COL].dt.isocalendar()
-    raw["_dow"]         = raw[DATE_COL].dt.dayofweek          # 0=Monday … 6=Sunday
-    raw["_iso_year"]    = iso.year.astype(int)
-    raw["_iso_week"]    = iso.week.astype(int)
+    iso = raw[DATE_COL].dt.isocalendar()
+    raw["_dow"] = raw[DATE_COL].dt.dayofweek  # 0=Monday … 6=Sunday
+    raw["_iso_year"] = iso.year.astype(int)
+    raw["_iso_week"] = iso.week.astype(int)
     # Unique string key per ISO week: "2026-W11"
     raw["_iso_week_id"] = (
-        raw["_iso_year"].astype(str) + "-W" +
-        raw["_iso_week"].astype(str).str.zfill(2)
+        raw["_iso_year"].astype(str) + "-W" + raw["_iso_week"].astype(str).str.zfill(2)
     )
-    raw["_has_event"]   = raw[EVENT_COL] != ""                # True when evento is non-empty
+    raw["_has_event"] = raw[EVENT_COL] != ""  # True when evento is non-empty
 
     # ISO-week-level event flag: True if ANY day in that ISO week has an event.
     # Used by baseline and signals to exclude entire weeks, not just individual days.
-    week_has_event = (
-        raw.groupby("_iso_week_id")["_has_event"]
-        .transform("any")
-    )
+    week_has_event = raw.groupby("_iso_week_id")["_has_event"].transform("any")
     raw["_iso_week_has_event"] = week_has_event
 
     return LoadResult(df=raw, camera_cols=camera_cols, errors=errors, warnings=warnings)

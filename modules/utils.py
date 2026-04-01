@@ -19,6 +19,7 @@ from loader import DATE_COL
 # ISO week helpers
 # ---------------------------------------------------------------------------
 
+
 def last_complete_iso_week(df: pd.DataFrame) -> tuple[pd.Timestamp, pd.Timestamp]:
     """
     Return (monday, sunday) of the last complete ISO week in the dataframe.
@@ -34,11 +35,11 @@ def last_complete_iso_week(df: pd.DataFrame) -> tuple[pd.Timestamp, pd.Timestamp
     sundays = df.loc[df[DATE_COL].dt.dayofweek == 6, DATE_COL]
 
     if sundays.empty:
-        week_end   = df[DATE_COL].max()
+        week_end = df[DATE_COL].max()
         week_start = week_end - pd.Timedelta(days=6)
         return week_start, week_end
 
-    week_end   = sundays.max()
+    week_end = sundays.max()
     week_start = week_end - pd.Timedelta(days=6)
     return week_start, week_end
 
@@ -55,6 +56,7 @@ def iso_week_mask(
 # ---------------------------------------------------------------------------
 # Week-level signal extractors
 # ---------------------------------------------------------------------------
+
 
 def week_bool(df: pd.DataFrame, mask: pd.Series, col: str) -> bool:
     """

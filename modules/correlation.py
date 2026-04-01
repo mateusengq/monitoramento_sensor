@@ -182,7 +182,7 @@ def _mean_pairwise_correlation(
     ]
     if len(valid_cols) < 2:
         return np.nan
-
+    # MSX
     correlations = []
     for c1, c2 in combinations(valid_cols, 2):
         pair_df = week_df[[c1, c2]].dropna()

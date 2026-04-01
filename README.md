@@ -6,8 +6,8 @@ loader -ok
 utils -ok
 baseline - ok
 signals - ok
-correlation - 
-scorer
+correlation - ok
+scorer - going
 classifier
 defaults
 views
