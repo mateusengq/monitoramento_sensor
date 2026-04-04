@@ -7,8 +7,8 @@ utils -ok
 baseline - ok
 signals - ok
 correlation - ok
-scorer - going
-classifier
+scorer - OK
+classifier - 
 defaults
 views
 app
