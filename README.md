@@ -8,7 +8,7 @@ baseline - ok
 signals - ok
 correlation - ok
 scorer - OK
-classifier - 
+classifier - ok
 defaults
 views
 app
