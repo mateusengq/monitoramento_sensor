@@ -9,7 +9,7 @@ signals - ok
 correlation - ok
 scorer - OK
 classifier - ok
-defaults
-views
-app
+defaults - ok
+views - ok
+app - ok
 exporter
